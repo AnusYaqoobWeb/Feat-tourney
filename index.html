@@ -540,6 +540,34 @@
       flex-shrink: 0;
     }
 
+    /* Bracket Line-Through Styling (Applies strictly to the match where the team gets eliminated/disqualified) */
+    .team-row.eliminated-team .team-row-name span,
+    .team-row-name.eliminated-team span {
+      color: #F87171 !important;
+      text-decoration: line-through !important;
+      text-decoration-color: rgba(239, 68, 68, 0.9) !important;
+      opacity: 0.85;
+    }
+    .team-row.disqualified-team .team-row-name span,
+    .team-row-name.disqualified-team span {
+      color: #FDA4AF !important;
+      text-decoration: line-through !important;
+      text-decoration-color: rgba(244, 63, 94, 0.95) !important;
+      opacity: 0.85;
+    }
+    .gf-team-name.eliminated-team {
+      color: #F87171 !important;
+      text-decoration: line-through !important;
+      text-decoration-color: rgba(239, 68, 68, 0.9) !important;
+      opacity: 0.85;
+    }
+    .gf-team-name.disqualified-team {
+      color: #FDA4AF !important;
+      text-decoration: line-through !important;
+      text-decoration-color: rgba(244, 63, 94, 0.95) !important;
+      opacity: 0.85;
+    }
+
     .match-flow {
       padding: 0.45rem 0.95rem;
       font-size: 0.68rem;
@@ -761,10 +789,20 @@
       border-color: rgba(239, 68, 68, 0.3);
       background: rgba(239, 68, 68, 0.08);
     }
+    .seed-chip.eliminated-chip .seed-name {
+      text-decoration: line-through;
+      text-decoration-color: rgba(239, 68, 68, 0.8);
+      color: #F87171;
+    }
     .seed-chip.dq-chip {
       opacity: 0.6;
       border-color: rgba(244, 63, 94, 0.4);
       background: rgba(244, 63, 94, 0.1);
+    }
+    .seed-chip.dq-chip .seed-name {
+      text-decoration: line-through;
+      text-decoration-color: rgba(244, 63, 94, 0.9);
+      color: #FDA4AF;
     }
     .seed-num {
       background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
@@ -1615,6 +1653,42 @@
         return { label: 'ELIMINATED', cls: 'eliminated', icon: 'fa-skull', type: 'eliminated' };
       }
 
+      // Check if a team was officially eliminated or disqualified IN THIS SPECIFIC MATCH
+      function isTeamEliminatedInMatch(match, teamName) {
+        if (!isRealTeam(teamName) || !match || !match.winner) return false;
+
+        const isLoser = (match.winner !== teamName && (match.team1 === teamName || match.team2 === teamName));
+        if (!isLoser) return false;
+
+        if (match.status === 'disqualified') {
+          return 'disqualified';
+        }
+
+        if (match.status === 'completed') {
+          // In Double Elimination, losing in Lower Bracket or Grand Final means official tournament elimination
+          const isEliminatingMatch = match.matchId.startsWith('M9') || 
+                                     match.matchId.startsWith('M10') || 
+                                     match.matchId.startsWith('M11') || 
+                                     match.matchId.startsWith('M12') || 
+                                     match.matchId.startsWith('M13') || 
+                                     match.matchId.startsWith('M14') || 
+                                     match.matchId.startsWith('M17') || 
+                                     match.matchId.startsWith('M18') || 
+                                     match.matchId.startsWith('M19') || 
+                                     match.matchId.startsWith('M21') || 
+                                     match.matchId === 'M22' ||
+                                     match.loseTo === 'Eliminated' || 
+                                     match.loseTo === '3rd Place' || 
+                                     match.loseTo === 'Runner-up';
+
+          if (isEliminatingMatch) {
+            return 'eliminated';
+          }
+        }
+
+        return false;
+      }
+
       function getLeaderboardArray() {
         let board = [];
         for (let team of teams) {
@@ -1689,6 +1763,9 @@
         if (dqEl) dqEl.innerText = dqCount;
 
         renderSeeding();
+        renderUpperBracket();
+        renderLowerBracket();
+        renderGrandFinal();
         renderLeaderboard();
       }
 
@@ -1764,11 +1841,21 @@
 
         function teamRow(name, seed, score, isWinner, isLoser) {
           const isPlaceholder = !isRealTeam(name);
+          let statusCls = '';
+          
+          // Apply line-through strictly if THIS team was eliminated/disqualified in THIS match
+          const elimState = isTeamEliminatedInMatch(match, name);
+          if (elimState === 'eliminated') {
+            statusCls = 'eliminated-team';
+          } else if (elimState === 'disqualified') {
+            statusCls = 'disqualified-team';
+          }
+
           const winnerClass = isWinner ? 'winner' : (isLoser ? 'loser' : '');
           const seedBadge = seed ? `<span class="team-seed">#${seed}</span>` : '';
           return `
-            <div class="team-row ${winnerClass}">
-              <div class="team-row-name ${isPlaceholder ? 'placeholder' : ''}">${seedBadge}<span>${escapeHtml(name)}</span></div>
+            <div class="team-row ${winnerClass} ${statusCls}">
+              <div class="team-row-name ${isPlaceholder ? 'placeholder' : ''} ${statusCls}">${seedBadge}<span>${escapeHtml(name)}</span></div>
               <div class="team-score">${score !== null && score !== undefined ? score : '-'}</div>
             </div>
           `;
@@ -1845,6 +1932,11 @@
         const container = document.getElementById('grandFinalDisplay');
         const gf = bracketData.grandFinal;
 
+        const elim1 = isTeamEliminatedInMatch(gf, gf.team1);
+        const elim2 = isTeamEliminatedInMatch(gf, gf.team2);
+        let t1Cls = elim1 === 'eliminated' ? 'eliminated-team' : (elim1 === 'disqualified' ? 'disqualified-team' : '');
+        let t2Cls = elim2 === 'eliminated' ? 'eliminated-team' : (elim2 === 'disqualified' ? 'disqualified-team' : '');
+
         container.innerHTML = `
           <div class="grand-final-card match-card" data-matchid="${gf.matchId}">
             <div class="gf-header-badge">
@@ -1855,7 +1947,7 @@
               <!-- Upper Champ Box -->
               <div class="gf-team-box ${gf.winner === gf.team1 ? 'winner-box' : ''}">
                 <span class="gf-bracket-tag upper-tag"><i class="fas fa-arrow-up"></i> Upper Champion</span>
-                <div class="gf-team-name">${escapeHtml(gf.team1)}</div>
+                <div class="gf-team-name ${t1Cls}">${escapeHtml(gf.team1)}</div>
                 <div class="gf-score-display">${gf.score1 !== null ? gf.score1 : '-'}</div>
               </div>
 
@@ -1867,7 +1959,7 @@
               <!-- Lower Champ Box -->
               <div class="gf-team-box ${gf.winner === gf.team2 ? 'winner-box' : ''}">
                 <span class="gf-bracket-tag lower-tag"><i class="fas fa-arrow-down"></i> Lower Champion</span>
-                <div class="gf-team-name">${escapeHtml(gf.team2)}</div>
+                <div class="gf-team-name ${t2Cls}">${escapeHtml(gf.team2)}</div>
                 <div class="gf-score-display">${gf.score2 !== null ? gf.score2 : '-'}</div>
               </div>
             </div>
@@ -1928,16 +2020,33 @@
           </div>`;
         }
 
+        const elim1 = isTeamEliminatedInMatch(match, match.team1);
+        const elim2 = isTeamEliminatedInMatch(match, match.team2);
+
+        let t1Style = '';
+        let t2Style = '';
+        if (elim1 === 'eliminated') {
+          t1Style = 'text-decoration: line-through; text-decoration-color: rgba(239,68,68,0.85); color: #F87171;';
+        } else if (elim1 === 'disqualified') {
+          t1Style = 'text-decoration: line-through; text-decoration-color: rgba(244,63,94,0.9); color: #FDA4AF;';
+        }
+
+        if (elim2 === 'eliminated') {
+          t2Style = 'text-decoration: line-through; text-decoration-color: rgba(239,68,68,0.85); color: #F87171;';
+        } else if (elim2 === 'disqualified') {
+          t2Style = 'text-decoration: line-through; text-decoration-color: rgba(244,63,94,0.9); color: #FDA4AF;';
+        }
+
         document.getElementById('matchModalTitle').innerHTML = `<i class="fas fa-swords" style="color:var(--primary-glow);"></i> ${escapeHtml(roundName)} · ${escapeHtml(matchId)}`;
         document.getElementById('matchModalBody').innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin:1.2rem 0; padding:1.2rem; background:rgba(0,0,0,0.4); border-radius:1.2rem; border:1px solid var(--glass-border);">
             <div style="flex:1; text-align:center;">
-              <div style="font-size:1.1rem; font-weight:800; color:${match.winner === match.team1 ? '#34D399' : '#FAFAFA'};">${escapeHtml(match.team1)}</div>
+              <div style="font-size:1.1rem; font-weight:800; color:${match.winner === match.team1 ? '#34D399' : '#FAFAFA'}; ${t1Style}">${escapeHtml(match.team1)}</div>
               <div style="font-size:2.4rem; font-family:'Outfit',sans-serif; font-weight:900; color:var(--primary-glow); margin-top:0.3rem;">${match.score1 !== null ? match.score1 : '-'}</div>
             </div>
             <div style="font-size:1.2rem; color:var(--primary-glow); font-weight:900; font-family:'Outfit',sans-serif;">VS</div>
             <div style="flex:1; text-align:center;">
-              <div style="font-size:1.1rem; font-weight:800; color:${match.winner === match.team2 ? '#34D399' : '#FAFAFA'};">${escapeHtml(match.team2)}</div>
+              <div style="font-size:1.1rem; font-weight:800; color:${match.winner === match.team2 ? '#34D399' : '#FAFAFA'}; ${t2Style}">${escapeHtml(match.team2)}</div>
               <div style="font-size:2.4rem; font-family:'Outfit',sans-serif; font-weight:900; color:var(--primary-glow); margin-top:0.3rem;">${match.score2 !== null ? match.score2 : '-'}</div>
             </div>
           </div>
@@ -2082,9 +2191,6 @@
       });
 
       // ===================== INITIAL LOAD =====================
-      renderUpperBracket();
-      renderLowerBracket();
-      renderGrandFinal();
       calculateLeaderboardFromBracket();
     })();
   </script>
