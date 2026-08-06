@@ -1611,7 +1611,7 @@
           { matchId:"M15", team1:teamBySeed[1], team2:teamBySeed[4], seed1:1, seed2:4, score1:2, score2:1, winner:teamBySeed[1], status:"completed", winTo:"Upper Final", loseTo:"Lower R3" },
           { matchId:"M16", team1:teamBySeed[10], team2:teamBySeed[11], seed1:10, seed2:11, score1:2, score2:0, winner:teamBySeed[10], status:"completed", winTo:"Upper Final", loseTo:"Lower R3" }
         ],
-        upperFinal: { matchId:"M20", team1:teamBySeed[1], team2:teamBySeed[10], seed1:1, seed2:10, score1:null, score2:null, winner:null, status:"pending", winTo:"Grand Final", loseTo:"Lower Final" },
+        upperFinal: { matchId:"M20", team1:teamBySeed[1], team2:teamBySeed[10], seed1:1, seed2:10, score1:2, score2:1, winner:teamBySeed[1], status:"completed", winTo:"Grand Final", loseTo:"Lower Final" },
 
         lowerR1: [
           { matchId:"M9", team1:teamBySeed[9], team2:teamBySeed[6], seed1:9, seed2:6, score1:null, score2:null, winner:null, status:"pending", winTo:"Lower R2", loseTo:"Eliminated" },
@@ -1628,9 +1628,9 @@
           { matchId:"M18", team1:"Winner Match 13", team2:teamBySeed[11], seed1:null, seed2:11, score1:null, score2:null, winner:null, status:"pending", winTo:"Lower Semi", loseTo:"Eliminated" }
         ],
         lowerSemi: { matchId:"M19", team1:"Winner Match 17", team2:"Winner Match 18", seed1:null, seed2:null, score1:null, score2:null, winner:null, status:"pending", winTo:"Lower Final", loseTo:"Eliminated" },
-        lowerFinal: { matchId:"M21", team1:"Winner Match 19", team2:"Loser Match 20", seed1:null, seed2:null, score1:null, score2:null, winner:null, status:"pending", winTo:"Grand Final", loseTo:"3rd Place" },
+        lowerFinal: { matchId:"M21", team1:"Winner Match 19", team2:teamBySeed[10], seed1:null, seed2:10, score1:null, score2:null, winner:null, status:"pending", winTo:"Grand Final", loseTo:"3rd Place" },
 
-        grandFinal: { matchId:"M22", team1:"Winner Upper Bracket", team2:"Winner Lower Bracket", seed1:null, seed2:null, score1:null, score2:null, winner:null, status:"pending", winTo:"🏆 Champion", loseTo:"Runner-up" }
+        grandFinal: { matchId:"M22", team1:teamBySeed[1], team2:"Winner Lower Bracket", seed1:1, seed2:null, score1:null, score2:null, winner:null, status:"pending", winTo:"🏆 Champion", loseTo:"Runner-up" }
       };
 
       // Track disqualified teams
